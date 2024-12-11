@@ -1,0 +1,8 @@
+# Environment variables
+.env
+
+# Binaries
+bin/
+
+# Scripts
+scripts/
