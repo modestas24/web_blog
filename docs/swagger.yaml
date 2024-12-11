@@ -1,0 +1,744 @@
+definitions:
+  entity.Comment:
+    properties:
+      content:
+        type: string
+      created_at:
+        type: string
+      id:
+        type: integer
+      post_id:
+        type: integer
+      updated_at:
+        type: string
+      user_id:
+        type: integer
+      verified:
+        type: boolean
+    type: object
+  entity.Post:
+    properties:
+      content:
+        type: string
+      created_at:
+        type: string
+      id:
+        type: integer
+      title:
+        type: string
+      updated_at:
+        type: string
+      user_id:
+        type: integer
+      verified:
+        type: boolean
+    type: object
+  entity.User:
+    properties:
+      created_at:
+        type: string
+      email:
+        type: string
+      id:
+        type: integer
+      role_id:
+        type: integer
+      updated_at:
+        type: string
+      username:
+        type: string
+      verified:
+        type: boolean
+    type: object
+  handlers.CreateCommentPayload:
+    properties:
+      content:
+        type: string
+    type: object
+  handlers.CreatePostPayload:
+    properties:
+      content:
+        maxLength: 1024
+        type: string
+      title:
+        maxLength: 128
+        type: string
+    required:
+    - content
+    - title
+    type: object
+  handlers.EnvelopeJson:
+    properties:
+      data: {}
+    type: object
+  handlers.ErrorEnvelopeJson:
+    properties:
+      error:
+        properties:
+          message:
+            type: string
+          method:
+            type: string
+          path:
+            type: string
+          timestamp:
+            type: integer
+        type: object
+    type: object
+  handlers.HealthEnvelope:
+    properties:
+      description:
+        type: string
+      title:
+        type: string
+      url:
+        type: string
+      version:
+        type: string
+    type: object
+  handlers.LoginUserPayload:
+    properties:
+      email:
+        type: string
+      password:
+        maxLength: 64
+        minLength: 8
+        type: string
+    required:
+    - email
+    - password
+    type: object
+  handlers.LogoutUserPayload:
+    properties:
+      token:
+        type: string
+    required:
+    - token
+    type: object
+  handlers.RegisterUserPayload:
+    properties:
+      email:
+        type: string
+      password:
+        maxLength: 64
+        minLength: 8
+        type: string
+      username:
+        maxLength: 32
+        minLength: 3
+        type: string
+    required:
+    - email
+    - password
+    - username
+    type: object
+  handlers.TokenEnvelopeJson:
+    properties:
+      token:
+        type: string
+    type: object
+  handlers.UpdatePostPayload:
+    properties:
+      content:
+        maxLength: 1024
+        type: string
+      title:
+        maxLength: 128
+        type: string
+    type: object
+  handlers.VerifyUserPayload:
+    properties:
+      id:
+        type: string
+    type: object
+info:
+  contact: {}
+  description: Blog API written in Golang for university module.
+  title: Golang Web Blog API
+paths:
+  /authentication/login:
+    post:
+      consumes:
+      - application/json
+      description: Authenticate a user and return a session token
+      parameters:
+      - description: Login details
+        in: body
+        name: payload
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.LoginUserPayload'
+      produces:
+      - application/json
+      responses:
+        "202":
+          description: Accepted
+          schema:
+            allOf:
+            - $ref: '#/definitions/handlers.EnvelopeJson'
+            - properties:
+                data:
+                  $ref: '#/definitions/handlers.TokenEnvelopeJson'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handlers.ErrorEnvelopeJson'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handlers.ErrorEnvelopeJson'
+      summary: User login
+      tags:
+      - authentication
+  /authentication/logout:
+    delete:
+      consumes:
+      - application/json
+      description: Invalidate a session token for a user
+      parameters:
+      - description: Logout details
+        in: body
+        name: payload
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.LogoutUserPayload'
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handlers.ErrorEnvelopeJson'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/handlers.ErrorEnvelopeJson'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handlers.ErrorEnvelopeJson'
+      security:
+      - ApiKeyAuth: []
+      summary: User logout
+      tags:
+      - authentication
+  /authentication/register:
+    post:
+      consumes:
+      - application/json
+      description: Create a new user account with the provided details
+      parameters:
+      - description: Registration details
+        in: body
+        name: payload
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.RegisterUserPayload'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            allOf:
+            - $ref: '#/definitions/handlers.EnvelopeJson'
+            - properties:
+                data:
+                  $ref: '#/definitions/entity.User'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handlers.ErrorEnvelopeJson'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handlers.ErrorEnvelopeJson'
+      summary: Register a new user
+      tags:
+      - authentication
+  /authentication/verify:
+    post:
+      consumes:
+      - application/json
+      description: Verify a user using a UUID from an email or verification method
+      parameters:
+      - description: Verification details
+        in: body
+        name: payload
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.VerifyUserPayload'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/handlers.EnvelopeJson'
+            - properties:
+                data:
+                  $ref: '#/definitions/entity.User'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handlers.ErrorEnvelopeJson'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handlers.ErrorEnvelopeJson'
+      summary: Verify a user account
+      tags:
+      - authentication
+  /health:
+    get:
+      description: get server health object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/handlers.EnvelopeJson'
+            - properties:
+                data:
+                  $ref: '#/definitions/handlers.HealthEnvelope'
+              type: object
+      summary: Show server health information.
+      tags:
+      - health
+  /posts:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve a list of all posts
+      parameters:
+      - description: Limit
+        in: query
+        name: limit
+        type: integer
+      - description: Offset
+        in: query
+        name: offset
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              allOf:
+              - $ref: '#/definitions/handlers.EnvelopeJson'
+              - properties:
+                  data:
+                    $ref: '#/definitions/entity.Post'
+                type: object
+            type: array
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handlers.ErrorEnvelopeJson'
+      summary: Get all posts
+      tags:
+      - posts
+    post:
+      consumes:
+      - application/json
+      description: Create a new post with the given payload
+      parameters:
+      - description: Post payload
+        in: body
+        name: payload
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.CreatePostPayload'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            allOf:
+            - $ref: '#/definitions/handlers.EnvelopeJson'
+            - properties:
+                data:
+                  $ref: '#/definitions/entity.Post'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handlers.ErrorEnvelopeJson'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handlers.ErrorEnvelopeJson'
+      security:
+      - ApiKeyAuth: []
+      summary: Create a new post
+      tags:
+      - posts
+  /posts/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Delete a specific post by its ID
+      parameters:
+      - description: Post ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handlers.ErrorEnvelopeJson'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/handlers.ErrorEnvelopeJson'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handlers.ErrorEnvelopeJson'
+      security:
+      - ApiKeyAuth: []
+      summary: Delete a post
+      tags:
+      - posts
+    get:
+      consumes:
+      - application/json
+      description: Retrieve a specific post by its ID
+      parameters:
+      - description: Post ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/handlers.EnvelopeJson'
+            - properties:
+                data:
+                  $ref: '#/definitions/entity.Post'
+              type: object
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/handlers.ErrorEnvelopeJson'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handlers.ErrorEnvelopeJson'
+      summary: Get a post by ID
+      tags:
+      - posts
+    patch:
+      consumes:
+      - application/json
+      description: Update the details of a specific post
+      parameters:
+      - description: Post ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Update payload
+        in: body
+        name: payload
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.UpdatePostPayload'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/handlers.EnvelopeJson'
+            - properties:
+                data:
+                  $ref: '#/definitions/entity.Post'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handlers.ErrorEnvelopeJson'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/handlers.ErrorEnvelopeJson'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handlers.ErrorEnvelopeJson'
+      security:
+      - ApiKeyAuth: []
+      summary: Update a post
+      tags:
+      - posts
+  /posts/{id}/comments:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve all comments associated with a specific post
+      parameters:
+      - description: Post ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Limit
+        in: query
+        name: limit
+        type: integer
+      - description: Offset
+        in: query
+        name: offset
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              allOf:
+              - $ref: '#/definitions/handlers.EnvelopeJson'
+              - properties:
+                  data:
+                    items:
+                      $ref: '#/definitions/entity.Comment'
+                    type: array
+                type: object
+            type: array
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handlers.ErrorEnvelopeJson'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handlers.ErrorEnvelopeJson'
+      summary: Get all comments by post ID
+      tags:
+      - comments
+    post:
+      consumes:
+      - application/json
+      description: Add a comment to a specific post
+      parameters:
+      - description: Post ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Comment payload
+        in: body
+        name: payload
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.CreateCommentPayload'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            allOf:
+            - $ref: '#/definitions/handlers.EnvelopeJson'
+            - properties:
+                data:
+                  $ref: '#/definitions/entity.Comment'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handlers.ErrorEnvelopeJson'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handlers.ErrorEnvelopeJson'
+      security:
+      - ApiKeyAuth: []
+      summary: Create a comment
+      tags:
+      - comments
+  /posts/comments:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve all comments in the system
+      parameters:
+      - description: Limit
+        in: query
+        name: limit
+        type: integer
+      - description: Offset
+        in: query
+        name: offset
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              allOf:
+              - $ref: '#/definitions/handlers.EnvelopeJson'
+              - properties:
+                  data:
+                    items:
+                      $ref: '#/definitions/entity.Comment'
+                    type: array
+                type: object
+            type: array
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handlers.ErrorEnvelopeJson'
+      security:
+      - ApiKeyAuth: []
+      summary: Get all comments
+      tags:
+      - comments
+  /posts/comments/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Delete a specific comment by its ID
+      parameters:
+      - description: Comment ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handlers.ErrorEnvelopeJson'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/handlers.ErrorEnvelopeJson'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handlers.ErrorEnvelopeJson'
+      security:
+      - ApiKeyAuth: []
+      summary: Delete a comment
+      tags:
+      - comments
+  /posts/user/{id}:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve all posts created by a specific user
+      parameters:
+      - description: User ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Limit
+        in: query
+        name: limit
+        type: integer
+      - description: Offset
+        in: query
+        name: offset
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              allOf:
+              - $ref: '#/definitions/handlers.EnvelopeJson'
+              - properties:
+                  data:
+                    $ref: '#/definitions/entity.Post'
+                type: object
+            type: array
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handlers.ErrorEnvelopeJson'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handlers.ErrorEnvelopeJson'
+      summary: Get posts by user ID
+      tags:
+      - posts
+  /users:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve a list of all registered users
+      parameters:
+      - description: Limit
+        in: query
+        name: limit
+        type: integer
+      - description: Offset
+        in: query
+        name: offset
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/handlers.EnvelopeJson'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/entity.User'
+                  type: array
+              type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handlers.ErrorEnvelopeJson'
+      security:
+      - ApiKeyAuth: []
+      summary: Get all users
+      tags:
+      - users
+securityDefinitions:
+  ApiKeyAuth:
+    description: User token required for authorization
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"
