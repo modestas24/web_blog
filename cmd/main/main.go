@@ -3,12 +3,12 @@ package main
 import (
 	"context"
 	"fmt"
-
 	"web_blog/cmd/main/api"
-	handlers "web_blog/cmd/main/handlers"
-	"web_blog/internal/auth"
+	"web_blog/cmd/main/middlewares"
+	"web_blog/cmd/main/services"
+	"web_blog/internal/authentication"
 	"web_blog/internal/data/storage"
-	pgxstorage "web_blog/internal/data/storage/pgxstorage"
+	"web_blog/internal/data/storage/pgxstorage"
 	"web_blog/internal/env"
 
 	"github.com/joho/godotenv"
@@ -23,92 +23,80 @@ import (
 // @name						Authorization
 // @description				User token required for authorization
 func main() {
-	godotenv.Load()
-	ctx := context.TODO()
+	var err error
 
 	// Logger
-	logger := zap.Must(zap.NewProduction())
+	Logger := zap.Must(zap.NewProduction())
+
+	if err = godotenv.Load(); err != nil {
+		Logger.Fatal("dotenv error", zap.Error(err))
+	}
+
+	url := env.GetString("URL", "localhost:8080")
+	address := env.GetString("ADDR", "localhost:8080")
+	healthEnvelope := services.HealthEnvelope{
+		Title:       api.Title,
+		Description: api.Description,
+		Version:     api.Version,
+		Url:         address,
+	}
 
 	// Database
-	database := &pgxstorage.PgxDatabase{}
-	if err := database.Open(ctx, nil); err != nil {
-		logger.Fatal(err.Error())
+	Database := &pgxstorage.PgxDatabase{}
+	if err = Database.Open(context.Background(), nil); err != nil {
+		Logger.Fatal("database error", zap.Error(err))
 		return
 	}
-	defer database.Close(ctx)
+	defer Database.Close(context.Background())
 
 	// Authenticator
-	authenticator := &auth.StatefulAuthenticator{}
+	Authenticator := authentication.StatefulAuthenticator{}
 
-	storage := storage.Storage{
-		Database:      database,
-		Users:         &pgxstorage.PgxUserRepository{Database: database},
-		Posts:         &pgxstorage.PgxPostRepository{Database: database},
-		Comments:      &pgxstorage.PgxCommentRepository{Database: database},
-		Verifications: &pgxstorage.PgxVerificationRepository{Database: database},
-		Sessions:      &pgxstorage.PgxSessionRepository{Database: database},
-		Roles:         &pgxstorage.PgxRoleRepository{Database: database},
+	// Storage
+	Storage := storage.Storage{
+		Database:      Database,
+		Users:         &pgxstorage.PgxUserRepository{Database: Database},
+		Posts:         &pgxstorage.PgxPostRepository{Database: Database},
+		Comments:      &pgxstorage.PgxCommentRepository{Database: Database},
+		Verifications: &pgxstorage.PgxVerificationRepository{Database: Database},
+		Sessions:      &pgxstorage.PgxSessionRepository{Database: Database},
+		Roles:         &pgxstorage.PgxRoleRepository{Database: Database},
 	}
 
-	// Error handler
-	errorHandler := &handlers.ErrorHandler{
-		Logger: logger,
+	// Middlewares
+	Middlewares := middlewares.Middleware{
+		Storage:       &Storage,
+		Authenticator: &Authenticator,
 	}
 
-	// Handlers
-	handlers := handlers.Handlers{
-		Errors: errorHandler,
-		Middleware: &handlers.MiddlewareHandler{
-			Storage:       &storage,
-			Authenticator: authenticator,
-			ErrorHandler:  errorHandler,
-		},
-		Health: &handlers.HealthHandler{
-			HealthEnvelope: handlers.HealthEnvelope{
-				Title:       api.Title,
-				Description: api.Description,
-				Version:     api.Version,
-				Url:         env.GetString("URL", "localhost:8080"),
-			},
-		},
-		Auth: &handlers.AuthHandler{
-			Storage:         &storage,
-			Authentificator: authenticator,
-			ErrorHandler:    errorHandler,
-		},
-		User: &handlers.UserHandler{
-			Storage:      &storage,
-			ErrorHandler: errorHandler,
-		},
-		Post: &handlers.PostHandler{
-			Storage:      &storage,
-			ErrorHandler: errorHandler,
-		},
-		Comment: &handlers.CommentHandler{
-			Storage:      &storage,
-			ErrorHandler: errorHandler,
-		},
+	// Services
+	Services := services.Services{
+		Health:  &services.HealthService{HealthEnvelope: healthEnvelope},
+		Auth:    &services.AuthService{Storage: &Storage, Authenticator: &Authenticator},
+		User:    &services.UserService{Storage: &Storage},
+		Post:    &services.PostService{Storage: &Storage},
+		Comment: &services.CommentService{Storage: &Storage},
 	}
 
 	// Application config
-	address := env.GetString("ADDR", ":8080")
-	url := env.GetString("URL", "localhost:8080")
-	config := api.Config{
+	Config := api.Config{
 		Address: address,
 		Url:     url,
-		Storage: database.Config,
+		Storage: Database.Config,
 		SwaggerConfig: api.SwaggerConfig{
 			DocsURL: fmt.Sprintf("http://%s%s/swagger/doc.json", address, api.BasePath),
 		},
 	}
 
-	application := &api.Application{
-		Config:        config,
-		Handlers:      handlers,
-		Storage:       storage,
-		Logger:        logger,
-		Authenticator: authenticator,
+	// Application
+	Application := &api.Application{
+		Config:        Config,
+		Middlewares:   Middlewares,
+		Services:      Services,
+		Storage:       Storage,
+		Logger:        Logger,
+		Authenticator: Authenticator,
 	}
 
-	logger.Fatal(application.Serve().Error())
+	Logger.Fatal(Application.Serve().Error())
 }

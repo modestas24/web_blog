@@ -1,10 +1,11 @@
-package handlers
+package services
 
 import (
 	"net/http"
+	"web_blog/cmd/main/utils"
 )
 
-type HealthHandler struct {
+type HealthService struct {
 	HealthEnvelope HealthEnvelope
 }
 
@@ -23,11 +24,6 @@ type HealthEnvelope struct {
 //	@Produce		json
 //	@Success		200	{object}	EnvelopeJson{data=HealthEnvelope}
 //	@Router			/health [get]
-func (handler *HealthHandler) CheckHealthHandler(w http.ResponseWriter, _ *http.Request) {
-	writeJsonData(w, http.StatusOK, HealthEnvelope{
-		Title:       handler.HealthEnvelope.Title,
-		Description: handler.HealthEnvelope.Description,
-		Version:     handler.HealthEnvelope.Version,
-		Url:         handler.HealthEnvelope.Url,
-	})
+func (service *HealthService) CheckHealth(w http.ResponseWriter, _ *http.Request) {
+	utils.WriteJsonData(w, http.StatusOK, service.HealthEnvelope)
 }

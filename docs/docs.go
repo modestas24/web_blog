@@ -35,7 +35,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/handlers.LoginUserPayload"
+                            "$ref": "#/definitions/services.LoginUserPayload"
                         }
                     }
                 ],
@@ -45,13 +45,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handlers.EnvelopeJson"
+                                    "$ref": "#/definitions/services.EnvelopeJson"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "$ref": "#/definitions/handlers.TokenEnvelopeJson"
+                                            "$ref": "#/definitions/services.TokenEnvelopeJson"
                                         }
                                     }
                                 }
@@ -61,13 +61,13 @@ const docTemplate = `{
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/handlers.ErrorEnvelopeJson"
+                            "$ref": "#/definitions/services.ErrorEnvelopeJson"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/handlers.ErrorEnvelopeJson"
+                            "$ref": "#/definitions/services.ErrorEnvelopeJson"
                         }
                     }
                 }
@@ -98,7 +98,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/handlers.LogoutUserPayload"
+                            "$ref": "#/definitions/services.LogoutUserPayload"
                         }
                     }
                 ],
@@ -109,19 +109,19 @@ const docTemplate = `{
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/handlers.ErrorEnvelopeJson"
+                            "$ref": "#/definitions/services.ErrorEnvelopeJson"
                         }
                     },
                     "404": {
                         "description": "Not Found",
                         "schema": {
-                            "$ref": "#/definitions/handlers.ErrorEnvelopeJson"
+                            "$ref": "#/definitions/services.ErrorEnvelopeJson"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/handlers.ErrorEnvelopeJson"
+                            "$ref": "#/definitions/services.ErrorEnvelopeJson"
                         }
                     }
                 }
@@ -147,7 +147,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/handlers.RegisterUserPayload"
+                            "$ref": "#/definitions/services.RegisterUserPayload"
                         }
                     }
                 ],
@@ -157,7 +157,7 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handlers.EnvelopeJson"
+                                    "$ref": "#/definitions/services.EnvelopeJson"
                                 },
                                 {
                                     "type": "object",
@@ -173,13 +173,13 @@ const docTemplate = `{
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/handlers.ErrorEnvelopeJson"
+                            "$ref": "#/definitions/services.ErrorEnvelopeJson"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/handlers.ErrorEnvelopeJson"
+                            "$ref": "#/definitions/services.ErrorEnvelopeJson"
                         }
                     }
                 }
@@ -205,7 +205,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/handlers.VerifyUserPayload"
+                            "$ref": "#/definitions/services.VerifyUserPayload"
                         }
                     }
                 ],
@@ -215,7 +215,7 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handlers.EnvelopeJson"
+                                    "$ref": "#/definitions/services.EnvelopeJson"
                                 },
                                 {
                                     "type": "object",
@@ -231,13 +231,13 @@ const docTemplate = `{
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/handlers.ErrorEnvelopeJson"
+                            "$ref": "#/definitions/services.ErrorEnvelopeJson"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/handlers.ErrorEnvelopeJson"
+                            "$ref": "#/definitions/services.ErrorEnvelopeJson"
                         }
                     }
                 }
@@ -259,13 +259,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handlers.EnvelopeJson"
+                                    "$ref": "#/definitions/services.EnvelopeJson"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "$ref": "#/definitions/handlers.HealthEnvelope"
+                                            "$ref": "#/definitions/services.HealthEnvelope"
                                         }
                                     }
                                 }
@@ -310,7 +310,7 @@ const docTemplate = `{
                             "items": {
                                 "allOf": [
                                     {
-                                        "$ref": "#/definitions/handlers.EnvelopeJson"
+                                        "$ref": "#/definitions/services.EnvelopeJson"
                                     },
                                     {
                                         "type": "object",
@@ -327,7 +327,7 @@ const docTemplate = `{
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/handlers.ErrorEnvelopeJson"
+                            "$ref": "#/definitions/services.ErrorEnvelopeJson"
                         }
                     }
                 }
@@ -356,7 +356,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/handlers.CreatePostPayload"
+                            "$ref": "#/definitions/services.CreatePostPayload"
                         }
                     }
                 ],
@@ -366,7 +366,7 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handlers.EnvelopeJson"
+                                    "$ref": "#/definitions/services.EnvelopeJson"
                                 },
                                 {
                                     "type": "object",
@@ -382,13 +382,13 @@ const docTemplate = `{
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/handlers.ErrorEnvelopeJson"
+                            "$ref": "#/definitions/services.ErrorEnvelopeJson"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/handlers.ErrorEnvelopeJson"
+                            "$ref": "#/definitions/services.ErrorEnvelopeJson"
                         }
                     }
                 }
@@ -434,7 +434,7 @@ const docTemplate = `{
                             "items": {
                                 "allOf": [
                                     {
-                                        "$ref": "#/definitions/handlers.EnvelopeJson"
+                                        "$ref": "#/definitions/services.EnvelopeJson"
                                     },
                                     {
                                         "type": "object",
@@ -454,7 +454,7 @@ const docTemplate = `{
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/handlers.ErrorEnvelopeJson"
+                            "$ref": "#/definitions/services.ErrorEnvelopeJson"
                         }
                     }
                 }
@@ -494,19 +494,19 @@ const docTemplate = `{
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/handlers.ErrorEnvelopeJson"
+                            "$ref": "#/definitions/services.ErrorEnvelopeJson"
                         }
                     },
                     "404": {
                         "description": "Not Found",
                         "schema": {
-                            "$ref": "#/definitions/handlers.ErrorEnvelopeJson"
+                            "$ref": "#/definitions/services.ErrorEnvelopeJson"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/handlers.ErrorEnvelopeJson"
+                            "$ref": "#/definitions/services.ErrorEnvelopeJson"
                         }
                     }
                 }
@@ -554,7 +554,7 @@ const docTemplate = `{
                             "items": {
                                 "allOf": [
                                     {
-                                        "$ref": "#/definitions/handlers.EnvelopeJson"
+                                        "$ref": "#/definitions/services.EnvelopeJson"
                                     },
                                     {
                                         "type": "object",
@@ -571,13 +571,13 @@ const docTemplate = `{
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/handlers.ErrorEnvelopeJson"
+                            "$ref": "#/definitions/services.ErrorEnvelopeJson"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/handlers.ErrorEnvelopeJson"
+                            "$ref": "#/definitions/services.ErrorEnvelopeJson"
                         }
                     }
                 }
@@ -611,7 +611,7 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handlers.EnvelopeJson"
+                                    "$ref": "#/definitions/services.EnvelopeJson"
                                 },
                                 {
                                     "type": "object",
@@ -627,13 +627,13 @@ const docTemplate = `{
                     "404": {
                         "description": "Not Found",
                         "schema": {
-                            "$ref": "#/definitions/handlers.ErrorEnvelopeJson"
+                            "$ref": "#/definitions/services.ErrorEnvelopeJson"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/handlers.ErrorEnvelopeJson"
+                            "$ref": "#/definitions/services.ErrorEnvelopeJson"
                         }
                     }
                 }
@@ -671,19 +671,19 @@ const docTemplate = `{
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/handlers.ErrorEnvelopeJson"
+                            "$ref": "#/definitions/services.ErrorEnvelopeJson"
                         }
                     },
                     "404": {
                         "description": "Not Found",
                         "schema": {
-                            "$ref": "#/definitions/handlers.ErrorEnvelopeJson"
+                            "$ref": "#/definitions/services.ErrorEnvelopeJson"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/handlers.ErrorEnvelopeJson"
+                            "$ref": "#/definitions/services.ErrorEnvelopeJson"
                         }
                     }
                 }
@@ -719,7 +719,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/handlers.UpdatePostPayload"
+                            "$ref": "#/definitions/services.UpdatePostPayload"
                         }
                     }
                 ],
@@ -729,7 +729,7 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handlers.EnvelopeJson"
+                                    "$ref": "#/definitions/services.EnvelopeJson"
                                 },
                                 {
                                     "type": "object",
@@ -745,19 +745,19 @@ const docTemplate = `{
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/handlers.ErrorEnvelopeJson"
+                            "$ref": "#/definitions/services.ErrorEnvelopeJson"
                         }
                     },
                     "404": {
                         "description": "Not Found",
                         "schema": {
-                            "$ref": "#/definitions/handlers.ErrorEnvelopeJson"
+                            "$ref": "#/definitions/services.ErrorEnvelopeJson"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/handlers.ErrorEnvelopeJson"
+                            "$ref": "#/definitions/services.ErrorEnvelopeJson"
                         }
                     }
                 }
@@ -805,7 +805,7 @@ const docTemplate = `{
                             "items": {
                                 "allOf": [
                                     {
-                                        "$ref": "#/definitions/handlers.EnvelopeJson"
+                                        "$ref": "#/definitions/services.EnvelopeJson"
                                     },
                                     {
                                         "type": "object",
@@ -825,13 +825,13 @@ const docTemplate = `{
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/handlers.ErrorEnvelopeJson"
+                            "$ref": "#/definitions/services.ErrorEnvelopeJson"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/handlers.ErrorEnvelopeJson"
+                            "$ref": "#/definitions/services.ErrorEnvelopeJson"
                         }
                     }
                 }
@@ -867,7 +867,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/handlers.CreateCommentPayload"
+                            "$ref": "#/definitions/services.CreateCommentPayload"
                         }
                     }
                 ],
@@ -877,7 +877,7 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handlers.EnvelopeJson"
+                                    "$ref": "#/definitions/services.EnvelopeJson"
                                 },
                                 {
                                     "type": "object",
@@ -893,13 +893,13 @@ const docTemplate = `{
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/handlers.ErrorEnvelopeJson"
+                            "$ref": "#/definitions/services.ErrorEnvelopeJson"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/handlers.ErrorEnvelopeJson"
+                            "$ref": "#/definitions/services.ErrorEnvelopeJson"
                         }
                     }
                 }
@@ -943,7 +943,7 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handlers.EnvelopeJson"
+                                    "$ref": "#/definitions/services.EnvelopeJson"
                                 },
                                 {
                                     "type": "object",
@@ -962,7 +962,7 @@ const docTemplate = `{
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/handlers.ErrorEnvelopeJson"
+                            "$ref": "#/definitions/services.ErrorEnvelopeJson"
                         }
                     }
                 }
@@ -1048,7 +1048,7 @@ const docTemplate = `{
                 }
             }
         },
-        "handlers.CreateCommentPayload": {
+        "services.CreateCommentPayload": {
             "type": "object",
             "properties": {
                 "content": {
@@ -1056,7 +1056,7 @@ const docTemplate = `{
                 }
             }
         },
-        "handlers.CreatePostPayload": {
+        "services.CreatePostPayload": {
             "type": "object",
             "required": [
                 "content",
@@ -1073,13 +1073,13 @@ const docTemplate = `{
                 }
             }
         },
-        "handlers.EnvelopeJson": {
+        "services.EnvelopeJson": {
             "type": "object",
             "properties": {
                 "data": {}
             }
         },
-        "handlers.ErrorEnvelopeJson": {
+        "services.ErrorEnvelopeJson": {
             "type": "object",
             "properties": {
                 "error": {
@@ -1101,7 +1101,7 @@ const docTemplate = `{
                 }
             }
         },
-        "handlers.HealthEnvelope": {
+        "services.HealthEnvelope": {
             "type": "object",
             "properties": {
                 "description": {
@@ -1118,7 +1118,7 @@ const docTemplate = `{
                 }
             }
         },
-        "handlers.LoginUserPayload": {
+        "services.LoginUserPayload": {
             "type": "object",
             "required": [
                 "email",
@@ -1135,7 +1135,7 @@ const docTemplate = `{
                 }
             }
         },
-        "handlers.LogoutUserPayload": {
+        "services.LogoutUserPayload": {
             "type": "object",
             "required": [
                 "token"
@@ -1146,7 +1146,7 @@ const docTemplate = `{
                 }
             }
         },
-        "handlers.RegisterUserPayload": {
+        "services.RegisterUserPayload": {
             "type": "object",
             "required": [
                 "email",
@@ -1169,7 +1169,7 @@ const docTemplate = `{
                 }
             }
         },
-        "handlers.TokenEnvelopeJson": {
+        "services.TokenEnvelopeJson": {
             "type": "object",
             "properties": {
                 "token": {
@@ -1177,7 +1177,7 @@ const docTemplate = `{
                 }
             }
         },
-        "handlers.UpdatePostPayload": {
+        "services.UpdatePostPayload": {
             "type": "object",
             "properties": {
                 "content": {
@@ -1190,7 +1190,7 @@ const docTemplate = `{
                 }
             }
         },
-        "handlers.VerifyUserPayload": {
+        "services.VerifyUserPayload": {
             "type": "object",
             "properties": {
                 "id": {

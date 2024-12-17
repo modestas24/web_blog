@@ -1,25 +1,22 @@
-package handlers
+package services
 
 import (
 	"net/http"
 	"strconv"
+	"web_blog/cmd/main/middlewares"
+	"web_blog/cmd/main/utils"
 	"web_blog/internal/data/entity"
 	"web_blog/internal/data/storage"
 
 	"github.com/go-chi/chi/v5"
 )
 
-type CommentHandler struct {
-	Storage      *storage.Storage
-	ErrorHandler IErrorHandler
+type CommentService struct {
+	Storage *storage.Storage
 }
 
-// type commentKey string
-
-// const commentCtx postKey = "comment"
-
 type CreateCommentPayload struct {
-	Content string `json:"content" handler.Application.Validator:"required,max=512"`
+	Content string `json:"content" service.Application.Validator:"required,max=512"`
 }
 
 // CreateComment godoc
@@ -36,39 +33,39 @@ type CreateCommentPayload struct {
 //	@Failure		500		{object}	ErrorEnvelopeJson
 //	@Security		ApiKeyAuth
 //	@Router			/posts/{id}/comments [post]
-func (handler *CommentHandler) CreateCommentHandler(w http.ResponseWriter, r *http.Request) {
+func (service *CommentService) CreateComment(w http.ResponseWriter, r *http.Request) {
 	var comment *entity.Comment
 	var payload CreateCommentPayload
 	var id int
 	var err error
 
 	if id, err = strconv.Atoi(chi.URLParam(r, "id")); err != nil {
-		handler.ErrorHandler.InternalServerError(w, r, err)
+		utils.InternalServerErrorResponse(w, r, err)
 		return
 	}
 
-	if err = readJson(w, r, &payload); err != nil {
-		handler.ErrorHandler.BadRequestError(w, r, err)
+	if err = utils.ReadJson(w, r, &payload); err != nil {
+		utils.BadRequestResponse(w, r, err)
 		return
 	}
 
-	if err = validateStruct(payload); err != nil {
-		handler.ErrorHandler.BadRequestError(w, r, err)
+	if err = utils.ValidateStruct(payload); err != nil {
+		utils.BadRequestResponse(w, r, err)
 		return
 	}
 
 	comment = &entity.Comment{
 		PostID:  int64(id),
-		UserID:  findUserFromCtx(r).ID,
+		UserID:  middlewares.FindUserFromContext(r).ID,
 		Content: payload.Content,
 	}
 
-	if err = handler.Storage.Comments.Create(r.Context(), nil, comment); err != nil {
-		handler.ErrorHandler.SwitchInternalServerError(w, r, err)
+	if err = service.Storage.Comments.Create(r.Context(), nil, comment); err != nil {
+		utils.SwitchInternalServerErrorResponse(w, r, err)
 		return
 	}
 
-	writeJsonData(w, http.StatusCreated, comment)
+	utils.WriteJsonData(w, http.StatusCreated, comment)
 }
 
 // FindAllComments godoc
@@ -84,7 +81,7 @@ func (handler *CommentHandler) CreateCommentHandler(w http.ResponseWriter, r *ht
 //	@Failure		500		{object}	ErrorEnvelopeJson
 //	@Security		ApiKeyAuth
 //	@Router			/posts/comments [get]
-func (handler *CommentHandler) FindAllCommentHandler(w http.ResponseWriter, r *http.Request) {
+func (service *CommentService) FindAllComments(w http.ResponseWriter, r *http.Request) {
 	var filter storage.FilterQuery
 	var comments []*entity.Comment
 	var err error
@@ -95,24 +92,24 @@ func (handler *CommentHandler) FindAllCommentHandler(w http.ResponseWriter, r *h
 	}
 
 	if err = filter.Parse(r); err != nil {
-		handler.ErrorHandler.BadRequestError(w, r, err)
+		utils.BadRequestResponse(w, r, err)
 		return
 	}
 
-	if err = validateStruct(filter); err != nil {
-		handler.ErrorHandler.BadRequestError(w, r, err)
+	if err = utils.ValidateStruct(filter); err != nil {
+		utils.BadRequestResponse(w, r, err)
 		return
 	}
 
-	if comments, err = handler.Storage.Comments.FindAll(r.Context(), nil, filter); err != nil {
-		handler.ErrorHandler.SwitchInternalServerError(w, r, err)
+	if comments, err = service.Storage.Comments.FindAll(r.Context(), nil, filter); err != nil {
+		utils.SwitchInternalServerErrorResponse(w, r, err)
 		return
 	}
 
-	writeJsonData(w, http.StatusOK, comments)
+	utils.WriteJsonData(w, http.StatusOK, comments)
 }
 
-// FindCommentsByPostID godoc
+// FindAllCommentsByPostID godoc
 //
 //	@Summary		Get all comments by post ID
 //	@Description	Retrieve all comments associated with a specific post
@@ -126,7 +123,7 @@ func (handler *CommentHandler) FindAllCommentHandler(w http.ResponseWriter, r *h
 //	@Failure		400		{object}	ErrorEnvelopeJson
 //	@Failure		500		{object}	ErrorEnvelopeJson
 //	@Router			/posts/{id}/comments [get]
-func (handler *CommentHandler) FindAllByPostIDCommentHandler(w http.ResponseWriter, r *http.Request) {
+func (service *CommentService) FindAllCommentsByPostID(w http.ResponseWriter, r *http.Request) {
 	var filter storage.FilterQuery
 	var comments []*entity.Comment
 	var id int
@@ -138,26 +135,26 @@ func (handler *CommentHandler) FindAllByPostIDCommentHandler(w http.ResponseWrit
 	}
 
 	if err = filter.Parse(r); err != nil {
-		handler.ErrorHandler.BadRequestError(w, r, err)
+		utils.BadRequestResponse(w, r, err)
 		return
 	}
 
-	if err = validateStruct(filter); err != nil {
-		handler.ErrorHandler.BadRequestError(w, r, err)
+	if err = utils.ValidateStruct(filter); err != nil {
+		utils.BadRequestResponse(w, r, err)
 		return
 	}
 
 	if id, err = strconv.Atoi(chi.URLParam(r, "id")); err != nil {
-		handler.ErrorHandler.InternalServerError(w, r, err)
+		utils.InternalServerErrorResponse(w, r, err)
 		return
 	}
 
-	if comments, err = handler.Storage.Comments.FindAllByPostID(r.Context(), nil, filter, int64(id)); err != nil {
-		handler.ErrorHandler.SwitchInternalServerError(w, r, err)
+	if comments, err = service.Storage.Comments.FindAllByPostID(r.Context(), nil, filter, int64(id)); err != nil {
+		utils.SwitchInternalServerErrorResponse(w, r, err)
 		return
 	}
 
-	writeJsonData(w, http.StatusOK, comments)
+	utils.WriteJsonData(w, http.StatusOK, comments)
 }
 
 // DeleteComment godoc
@@ -174,17 +171,17 @@ func (handler *CommentHandler) FindAllByPostIDCommentHandler(w http.ResponseWrit
 //	@Failure		500	{object}	ErrorEnvelopeJson
 //	@Security		ApiKeyAuth
 //	@Router			/posts/comments/{id} [delete]
-func (handler *CommentHandler) DeleteCommentHandler(w http.ResponseWriter, r *http.Request) {
+func (service *CommentService) DeleteComment(w http.ResponseWriter, r *http.Request) {
 	var id int
 	var err error
 
 	if id, err = strconv.Atoi(chi.URLParam(r, "id")); err != nil {
-		handler.ErrorHandler.InternalServerError(w, r, err)
+		utils.InternalServerErrorResponse(w, r, err)
 		return
 	}
 
-	if err = handler.Storage.Comments.Delete(r.Context(), nil, int64(id)); err != nil {
-		handler.ErrorHandler.SwitchInternalServerError(w, r, err)
+	if err = service.Storage.Comments.Delete(r.Context(), nil, int64(id)); err != nil {
+		utils.SwitchInternalServerErrorResponse(w, r, err)
 		return
 	}
 

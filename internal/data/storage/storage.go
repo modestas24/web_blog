@@ -11,9 +11,9 @@ import (
 )
 
 var (
-	ErrorNotFound        error         = errors.New("resource not found")
-	ErrorDuplicate       error         = errors.New("resource already exists")
-	DatabaseQueryTimeout time.Duration = time.Second * 3
+	ErrorNotFound        = errors.New("resource not found")
+	ErrorDuplicate       = errors.New("resource already exists")
+	DatabaseQueryTimeout = time.Second * 3
 )
 
 type Database interface {

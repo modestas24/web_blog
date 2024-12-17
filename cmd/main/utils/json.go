@@ -1,4 +1,4 @@
-package handlers
+package utils
 
 import (
 	"encoding/json"
@@ -9,6 +9,8 @@ import (
 
 	"github.com/go-playground/validator/v10"
 )
+
+var validate = validator.New(validator.WithRequiredStructEnabled())
 
 type EnvelopeJson struct {
 	Data any `json:"data"`
@@ -34,7 +36,7 @@ func getTagValidationError(tag string) string {
 	}
 }
 
-func validateStruct(payload any) error {
+func ValidateStruct(payload any) error {
 	var sb strings.Builder
 	var err error
 
@@ -57,7 +59,7 @@ func validateStruct(payload any) error {
 	return errors.New(sb.String())
 }
 
-func readJson(w http.ResponseWriter, r *http.Request, payload any) error {
+func ReadJson(w http.ResponseWriter, r *http.Request, payload any) error {
 	maxBytes := 1_048_578
 	r.Body = http.MaxBytesReader(w, r.Body, int64(maxBytes))
 
@@ -66,7 +68,7 @@ func readJson(w http.ResponseWriter, r *http.Request, payload any) error {
 	return decoder.Decode(payload)
 }
 
-func writeJson(w http.ResponseWriter, status int, payload any) error {
+func WriteJson(w http.ResponseWriter, status int, payload any) error {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)
 
@@ -74,15 +76,15 @@ func writeJson(w http.ResponseWriter, status int, payload any) error {
 	return encoder.Encode(payload)
 }
 
-func writeJsonData(w http.ResponseWriter, status int, payload any) error {
+func WriteJsonData(w http.ResponseWriter, status int, payload any) error {
 	response := EnvelopeJson{
 		Data: payload,
 	}
 
-	return writeJson(w, status, response)
+	return WriteJson(w, status, response)
 }
 
-func writeJsonError(w http.ResponseWriter, r *http.Request, status int, message string) error {
+func WriteJsonError(w http.ResponseWriter, r *http.Request, status int, message string) error {
 	response := ErrorEnvelopeJson{
 		Error: struct {
 			Method    string `json:"method"`
@@ -97,5 +99,5 @@ func writeJsonError(w http.ResponseWriter, r *http.Request, status int, message 
 		},
 	}
 
-	return writeJson(w, status, response)
+	return WriteJson(w, status, response)
 }

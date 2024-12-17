@@ -1,27 +1,18 @@
-package handlers
+package services
 
 import (
-	"context"
 	"net/http"
 	"strconv"
+	"web_blog/cmd/main/middlewares"
+	"web_blog/cmd/main/utils"
 	"web_blog/internal/data/entity"
 	"web_blog/internal/data/storage"
 
 	"github.com/go-chi/chi/v5"
 )
 
-type PostHandler struct {
-	Storage      *storage.Storage
-	ErrorHandler IErrorHandler
-}
-
-type postKey string
-
-const PostCtx postKey = "post"
-
-func (handler *PostHandler) FindPostFromContext(r *http.Request) *entity.Post {
-	post, _ := r.Context().Value(PostCtx).(*entity.Post)
-	return post
+type PostService struct {
+	Storage *storage.Storage
 }
 
 type CreatePostPayload struct {
@@ -42,32 +33,32 @@ type CreatePostPayload struct {
 //	@Failure		400		{object}	ErrorEnvelopeJson
 //	@Failure		500		{object}	ErrorEnvelopeJson
 //	@Router			/posts [post]
-func (handler *PostHandler) CreatePostHandler(w http.ResponseWriter, r *http.Request) {
+func (service *PostService) CreatePost(w http.ResponseWriter, r *http.Request) {
 	var payload CreatePostPayload
 	var err error
 
-	if err = readJson(w, r, &payload); err != nil {
-		handler.ErrorHandler.InternalServerError(w, r, err)
+	if err = utils.ReadJson(w, r, &payload); err != nil {
+		utils.InternalServerErrorResponse(w, r, err)
 		return
 	}
 
-	if err = validateStruct(payload); err != nil {
-		handler.ErrorHandler.BadRequestError(w, r, err)
+	if err = utils.ValidateStruct(payload); err != nil {
+		utils.BadRequestResponse(w, r, err)
 		return
 	}
 
 	post := &entity.Post{
 		Title:   payload.Title,
 		Content: payload.Content,
-		UserID:  findUserFromCtx(r).ID,
+		UserID:  middlewares.FindUserFromContext(r).ID,
 	}
 
-	if err = handler.Storage.Posts.Create(r.Context(), nil, post); err != nil {
-		handler.ErrorHandler.SwitchInternalServerError(w, r, err)
+	if err = service.Storage.Posts.Create(r.Context(), nil, post); err != nil {
+		utils.SwitchInternalServerErrorResponse(w, r, err)
 		return
 	}
 
-	writeJsonData(w, http.StatusCreated, post)
+	utils.WriteJsonData(w, http.StatusCreated, post)
 }
 
 // FindAllPosts godoc
@@ -82,7 +73,7 @@ func (handler *PostHandler) CreatePostHandler(w http.ResponseWriter, r *http.Req
 //	@Success		200		{array}		EnvelopeJson{data=entity.Post}
 //	@Failure		500		{object}	ErrorEnvelopeJson
 //	@Router			/posts [get]
-func (handler *PostHandler) FindAllPostHandler(w http.ResponseWriter, r *http.Request) {
+func (service *PostService) FindAllPosts(w http.ResponseWriter, r *http.Request) {
 	var filter storage.FilterQuery
 	var posts []*entity.Post
 	var err error
@@ -94,21 +85,21 @@ func (handler *PostHandler) FindAllPostHandler(w http.ResponseWriter, r *http.Re
 	}
 
 	if err = filter.Parse(r); err != nil {
-		handler.ErrorHandler.BadRequestError(w, r, err)
+		utils.BadRequestResponse(w, r, err)
 		return
 	}
 
-	if err = validateStruct(filter); err != nil {
-		handler.ErrorHandler.BadRequestError(w, r, err)
+	if err = utils.ValidateStruct(filter); err != nil {
+		utils.BadRequestResponse(w, r, err)
 		return
 	}
 
-	if posts, err = handler.Storage.Posts.FindAll(ctx, nil, filter); err != nil {
-		handler.ErrorHandler.SwitchInternalServerError(w, r, err)
+	if posts, err = service.Storage.Posts.FindAll(ctx, nil, filter); err != nil {
+		utils.SwitchInternalServerErrorResponse(w, r, err)
 		return
 	}
 
-	writeJsonData(w, http.StatusOK, posts)
+	utils.WriteJsonData(w, http.StatusOK, posts)
 }
 
 // FindAllPostsByUserID godoc
@@ -125,7 +116,7 @@ func (handler *PostHandler) FindAllPostHandler(w http.ResponseWriter, r *http.Re
 //	@Failure		400		{object}	ErrorEnvelopeJson
 //	@Failure		500		{object}	ErrorEnvelopeJson
 //	@Router			/posts/user/{id} [get]
-func (handler *PostHandler) FindAllPostByUserIDHandler(w http.ResponseWriter, r *http.Request) {
+func (service *PostService) FindAllPostsByUserID(w http.ResponseWriter, r *http.Request) {
 	var filter storage.FilterQuery
 	var posts []*entity.Post
 	var id int
@@ -138,26 +129,26 @@ func (handler *PostHandler) FindAllPostByUserIDHandler(w http.ResponseWriter, r 
 	}
 
 	if err = filter.Parse(r); err != nil {
-		handler.ErrorHandler.BadRequestError(w, r, err)
+		utils.BadRequestResponse(w, r, err)
 		return
 	}
 
-	if err = validateStruct(filter); err != nil {
-		handler.ErrorHandler.BadRequestError(w, r, err)
+	if err = utils.ValidateStruct(filter); err != nil {
+		utils.BadRequestResponse(w, r, err)
 		return
 	}
 
 	if id, err = strconv.Atoi(chi.URLParam(r, "id")); err != nil {
-		handler.ErrorHandler.InternalServerError(w, r, err)
+		utils.InternalServerErrorResponse(w, r, err)
 		return
 	}
 
-	if posts, err = handler.Storage.Posts.FindAllByUserID(ctx, nil, filter, int64(id)); err != nil {
-		handler.ErrorHandler.SwitchInternalServerError(w, r, err)
+	if posts, err = service.Storage.Posts.FindAllByUserID(ctx, nil, filter, int64(id)); err != nil {
+		utils.SwitchInternalServerErrorResponse(w, r, err)
 		return
 	}
 
-	writeJsonData(w, http.StatusOK, posts)
+	utils.WriteJsonData(w, http.StatusOK, posts)
 }
 
 // FindPost godoc
@@ -172,9 +163,9 @@ func (handler *PostHandler) FindAllPostByUserIDHandler(w http.ResponseWriter, r 
 //	@Failure		404	{object}	ErrorEnvelopeJson
 //	@Failure		500	{object}	ErrorEnvelopeJson
 //	@Router			/posts/{id} [get]
-func (handler *PostHandler) FindPostHandler(w http.ResponseWriter, r *http.Request) {
-	post := handler.FindPostFromContext(r)
-	writeJsonData(w, http.StatusOK, post)
+func (service *PostService) FindPost(w http.ResponseWriter, r *http.Request) {
+	post := middlewares.FindPostFromContext(r)
+	utils.WriteJsonData(w, http.StatusOK, post)
 }
 
 type UpdatePostPayload struct {
@@ -197,18 +188,18 @@ type UpdatePostPayload struct {
 //	@Failure		404		{object}	ErrorEnvelopeJson
 //	@Failure		500		{object}	ErrorEnvelopeJson
 //	@Router			/posts/{id} [patch]
-func (handler *PostHandler) UpdatePostHandler(w http.ResponseWriter, r *http.Request) {
-	post := handler.FindPostFromContext(r)
+func (service *PostService) UpdatePost(w http.ResponseWriter, r *http.Request) {
+	post := middlewares.FindPostFromContext(r)
 	var payload UpdatePostPayload
 	var err error
 
-	if err = readJson(w, r, &payload); err != nil {
-		handler.ErrorHandler.BadRequestError(w, r, err)
+	if err = utils.ReadJson(w, r, &payload); err != nil {
+		utils.BadRequestResponse(w, r, err)
 		return
 	}
 
-	if err = validateStruct(payload); err != nil {
-		handler.ErrorHandler.BadRequestError(w, r, err)
+	if err = utils.ValidateStruct(payload); err != nil {
+		utils.BadRequestResponse(w, r, err)
 		return
 	}
 
@@ -220,12 +211,12 @@ func (handler *PostHandler) UpdatePostHandler(w http.ResponseWriter, r *http.Req
 		post.Content = *payload.Content
 	}
 
-	if err = handler.Storage.Posts.Update(r.Context(), nil, post); err != nil {
-		handler.ErrorHandler.SwitchInternalServerError(w, r, err)
+	if err = service.Storage.Posts.Update(r.Context(), nil, post); err != nil {
+		utils.SwitchInternalServerErrorResponse(w, r, err)
 		return
 	}
 
-	writeJsonData(w, http.StatusOK, post)
+	utils.WriteJsonData(w, http.StatusOK, post)
 }
 
 // DeletePost godoc
@@ -242,47 +233,20 @@ func (handler *PostHandler) UpdatePostHandler(w http.ResponseWriter, r *http.Req
 //	@Failure		404	{object}	ErrorEnvelopeJson
 //	@Failure		500	{object}	ErrorEnvelopeJson
 //	@Router			/posts/{id} [delete]
-func (handler *PostHandler) DeletePostHandler(w http.ResponseWriter, r *http.Request) {
+func (service *PostService) DeletePost(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	var id int
 	var err error
 
 	if id, err = strconv.Atoi(chi.URLParam(r, "id")); err != nil {
-		handler.ErrorHandler.InternalServerError(w, r, err)
+		utils.InternalServerErrorResponse(w, r, err)
 		return
 	}
 
-	if err = handler.Storage.Posts.Delete(ctx, nil, int64(id)); err != nil {
-		handler.ErrorHandler.SwitchInternalServerError(w, r, err)
+	if err = service.Storage.Posts.Delete(ctx, nil, int64(id)); err != nil {
+		utils.SwitchInternalServerErrorResponse(w, r, err)
 		return
 	}
 
 	w.WriteHeader(http.StatusNoContent)
-}
-
-func (handler *PostHandler) PostContextMiddleware(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if r.Method == http.MethodDelete {
-			next.ServeHTTP(w, r)
-			return
-		}
-
-		ctx := r.Context()
-		var id int
-		var post *entity.Post
-		var err error
-
-		if id, err = strconv.Atoi(chi.URLParam(r, "id")); err != nil {
-			handler.ErrorHandler.InternalServerError(w, r, err)
-			return
-		}
-
-		if post, err = handler.Storage.Posts.Find(ctx, nil, int64(id)); err != nil {
-			handler.ErrorHandler.SwitchInternalServerError(w, r, err)
-			return
-		}
-
-		ctx = context.WithValue(ctx, PostCtx, post)
-		next.ServeHTTP(w, r.WithContext(ctx))
-	})
 }

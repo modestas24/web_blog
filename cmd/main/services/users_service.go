@@ -1,23 +1,14 @@
-package handlers
+package services
 
 import (
 	"net/http"
+	"web_blog/cmd/main/utils"
 	"web_blog/internal/data/entity"
 	"web_blog/internal/data/storage"
 )
 
-type UserHandler struct {
-	Storage      *storage.Storage
-	ErrorHandler IErrorHandler
-}
-
-type userKey string
-
-const UserCtx userKey = "user"
-
-func findUserFromCtx(r *http.Request) *entity.User {
-	user, _ := r.Context().Value(UserCtx).(*entity.User)
-	return user
+type UserService struct {
+	Storage *storage.Storage
 }
 
 // FindAllUsers godoc
@@ -33,7 +24,7 @@ func findUserFromCtx(r *http.Request) *entity.User {
 //	@Failure		500		{object}	ErrorEnvelopeJson
 //	@Security		ApiKeyAuth
 //	@Router			/users [get]
-func (handler *UserHandler) FindAllUsersHandler(w http.ResponseWriter, r *http.Request) {
+func (service *UserService) FindAllUsers(w http.ResponseWriter, r *http.Request) {
 	var filter storage.FilterQuery
 	var users []*entity.User
 	var err error
@@ -44,18 +35,18 @@ func (handler *UserHandler) FindAllUsersHandler(w http.ResponseWriter, r *http.R
 	}
 
 	if err = filter.Parse(r); err != nil {
-		handler.ErrorHandler.BadRequestError(w, r, err)
+		utils.BadRequestResponse(w, r, err)
 		return
 	}
 
-	if err = validateStruct(filter); err != nil {
-		handler.ErrorHandler.BadRequestError(w, r, err)
+	if err = utils.ValidateStruct(filter); err != nil {
+		utils.BadRequestResponse(w, r, err)
 		return
 	}
 
-	if users, err = handler.Storage.Users.FindAll(r.Context(), nil, filter); err != nil {
-		handler.ErrorHandler.SwitchInternalServerError(w, r, err)
+	if users, err = service.Storage.Users.FindAll(r.Context(), nil, filter); err != nil {
+		utils.SwitchInternalServerErrorResponse(w, r, err)
 	}
 
-	writeJsonData(w, http.StatusOK, users)
+	utils.WriteJsonData(w, http.StatusOK, users)
 }

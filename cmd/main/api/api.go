@@ -3,14 +3,15 @@ package api
 import (
 	"net/http"
 	"time"
-	"web_blog/cmd/main/handlers"
+	"web_blog/cmd/main/middlewares"
+	"web_blog/cmd/main/services"
 	"web_blog/docs"
-	"web_blog/internal/auth"
+	"web_blog/internal/authentication"
 	"web_blog/internal/data/storage"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
-	httpSwagger "github.com/swaggo/http-swagger"
+	"github.com/swaggo/http-swagger"
 	"go.uber.org/zap"
 )
 
@@ -23,10 +24,11 @@ const (
 
 type Application struct {
 	Config        Config
-	Handlers      handlers.Handlers
+	Middlewares   middlewares.Middleware
+	Services      services.Services
 	Storage       storage.Storage
+	Authenticator authentication.StatefulAuthenticator
 	Logger        *zap.Logger
-	Authenticator *auth.StatefulAuthenticator
 }
 
 type Config struct {
@@ -45,11 +47,13 @@ type SwaggerConfig struct {
 	DocsURL     string
 }
 
-func (application *Application) Mount() http.Handler {
-	handlers := application.Handlers
-	authMiddleware := handlers.Middleware.StatefulAuthMiddleware
-	roleMiddleware := handlers.Middleware.RoleMiddleware
-	postMiddleware := handlers.Post.PostContextMiddleware
+func (app *Application) Mount() http.Handler {
+	Services := app.Services
+	Middlewares := app.Middlewares
+
+	StatefulAuthentication := Middlewares.StatefulAuthentication
+	Authorization := Middlewares.Authorization
+	PostContext := Middlewares.PostContext
 
 	r := chi.NewRouter()
 	r.Use(middleware.RequestID)
@@ -58,70 +62,79 @@ func (application *Application) Mount() http.Handler {
 	r.Use(middleware.Recoverer)
 
 	r.Route("/v1", func(r chi.Router) {
-		r.Get("/health", handlers.Health.CheckHealthHandler)
-		r.Get("/swagger/*", httpSwagger.Handler(httpSwagger.URL(application.Config.SwaggerConfig.DocsURL)))
+		r.Get("/health", Services.Health.CheckHealth)
+		r.Get("/swagger/*", httpSwagger.Handler(httpSwagger.URL(app.Config.SwaggerConfig.DocsURL)))
 
-		// Post handlers
+		// Post Services.
 		r.Group(func(r chi.Router) {
-			r.Get("/posts", handlers.Post.FindAllPostHandler)
-			r.Get("/users/{id}/posts", handlers.Post.FindAllPostByUserIDHandler)
-			r.With(postMiddleware).Get("/posts/{id}", handlers.Post.FindPostHandler)
+			r.Get("/posts", Services.Post.FindAllPosts)
+			r.Get("/users/{id}/posts", Services.Post.FindAllPostsByUserID)
+			r.With(PostContext).
+				Get("/posts/{id}", Services.Post.FindPost)
 
+			// With Authentication.
 			r.Group(func(r chi.Router) {
-				r.Use(authMiddleware)
+				r.Use(StatefulAuthentication)
 
-				r.With(roleMiddleware("user")).Post("/posts", handlers.Post.CreatePostHandler)
-				r.With(roleMiddleware("moderator"), postMiddleware).Patch("/posts/{id}", handlers.Post.UpdatePostHandler)
-				r.With(roleMiddleware("moderator"), postMiddleware).Delete("/posts/{id}", handlers.Post.DeletePostHandler)
+				r.With(Authorization("user")).
+					Post("/posts", Services.Post.CreatePost)
+				r.With(Authorization("moderator"), PostContext).
+					Patch("/posts/{id}", Services.Post.UpdatePost)
+				r.With(Authorization("moderator"), PostContext).
+					Delete("/posts/{id}", Services.Post.DeletePost)
 			})
 
 		})
 
-		// Comment handlers
+		// Comment Services.
 		r.Group(func(r chi.Router) {
-			r.Get("/posts/{id}/comments", handlers.Comment.FindAllByPostIDCommentHandler)
+			r.Get("/posts/{id}/comments", Services.Comment.FindAllCommentsByPostID)
 
+			// With Authentication.
 			r.Group(func(r chi.Router) {
-				r.Use(authMiddleware)
-				r.With(roleMiddleware("user")).Post("/posts/{id}/comments", handlers.Comment.CreateCommentHandler)
-				r.With(roleMiddleware("moderator")).Get("/posts/comments", handlers.Comment.FindAllCommentHandler)
-				r.With(roleMiddleware("moderator")).Delete("/posts/comments/{id}", handlers.Comment.DeleteCommentHandler)
+				r.Use(StatefulAuthentication)
+				r.With(Authorization("user")).
+					Post("/posts/{id}/comments", Services.Comment.CreateComment)
+				r.With(Authorization("moderator")).
+					Get("/posts/comments", Services.Comment.FindAllComments)
+				r.With(Authorization("moderator")).
+					Delete("/posts/comments/{id}", Services.Comment.DeleteComment)
 			})
 		})
 
-		// User handlers
+		// User Services.
 		r.Group(func(r chi.Router) {
-			r.Use(authMiddleware, roleMiddleware("admin"))
-			r.Get("/users", handlers.User.FindAllUsersHandler)
+			r.Use(StatefulAuthentication, Authorization("admin"))
+			r.Get("/users", Services.User.FindAllUsers)
 		})
 
-		// Authentication handlers
+		// Authentication Services.
 		r.Group(func(r chi.Router) {
-			r.Post("/authentication/register", handlers.Auth.RegisterUserHandler)
-			r.Post("/authentication/verify", handlers.Auth.VerifyUserHandler)
-			r.Post("/authentication/login", handlers.Auth.LoginUserHandler)
-			r.Delete("/authentication/logout", handlers.Auth.LogoutUserHandler)
+			r.Post("/authentication/register", Services.Auth.RegisterUser)
+			r.Post("/authentication/verify", Services.Auth.VerifyUser)
+			r.Post("/authentication/login", Services.Auth.LoginUser)
+			r.Delete("/authentication/logout", Services.Auth.LogoutUser)
 		})
 	})
 
 	return r
 }
 
-func (application *Application) Serve() error {
+func (app *Application) Serve() error {
 	docs.SwaggerInfo.Title = Title
 	docs.SwaggerInfo.Description = Description
 	docs.SwaggerInfo.BasePath = BasePath
 	docs.SwaggerInfo.Version = Version
-	docs.SwaggerInfo.Host = application.Config.Url
+	docs.SwaggerInfo.Host = app.Config.Url
 
 	srv := &http.Server{
-		Addr:         application.Config.Address,
-		Handler:      application.Mount(),
+		Addr:         app.Config.Address,
+		Handler:      app.Mount(),
 		ReadTimeout:  10 * time.Second,
 		WriteTimeout: 10 * time.Second,
 		IdleTimeout:  30 * time.Second,
 	}
 
-	application.Logger.Info("Server has started", zap.String("address", application.Config.Address))
+	app.Logger.Info("Server has started", zap.String("address", app.Config.Address))
 	return srv.ListenAndServe()
 }
